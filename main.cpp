@@ -347,8 +347,45 @@ class LoginMenuManger {
 // TODO: complete this function
 class AccountCreater {
     public:
+    static constexpr double MIN_BALANCE = 1000;
+    static constexpr double MAX_BALANCE = Account::MAX_BALANCE;
+
     static void create_account() {
-        // TODO: 
+        // here you can use the InputManager class to get the input from the user
+        printf("Account creation page: \n");
+        int acc_num = AccountNumberManager::get_fresh_acc_num();
+        
+        puts("Please enter your pin carefully!!.\n");
+        int pin = InputManager::get_number_input(4, "Enter your pin: ", "Invalid pin!!\n");
+
+        puts("Please enter the intial deposit amount!!\n");
+        double balance = InputManager::get_real_input
+            (MIN_BALANCE, MAX_BALANCE, "Enter your initial amount to deposit: ",
+                "Invalid amount deposit!!\n");
+
+        Account new_account(acc_num, balance, pin);
+        AccountManager::add_account(new_account);
+
+        puts("Account created successfully!!\n");
+    }
+};
+
+// TODO: 
+class LoginManager {
+    public:
+    static bool prompt_login() {
+        puts("Login page: \n");
+
+        
+    }
+};
+
+
+// TODO: 
+class AccountRemover {
+    public: 
+    static void remove_account() {
+        //
     }
 };
 
