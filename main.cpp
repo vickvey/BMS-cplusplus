@@ -256,6 +256,12 @@ class Account {
         std::cout << "Curr balance: Rs " << this->balance << std::endl;
     }
 
+    void display_account() const {
+        std::cout << "Here are your recorded account details: \n";
+        std::cout << "Account number: " << this->acc_num << std::endl;
+        std::cout << "Balance: Rs " << this->balance << std::endl;
+    }
+
     private:
     int pin;
 };
@@ -367,6 +373,8 @@ class AccountCreater {
         AccountManager::add_account(new_account);
 
         puts("Account created successfully!!\n");
+
+
     }
 };
 
@@ -376,7 +384,7 @@ class LoginManager {
     static bool prompt_login() {
         puts("Login page: \n");
 
-        
+        std::cout << "Enter your existing account number: ";
     }
 };
 
