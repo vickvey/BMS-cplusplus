@@ -7,9 +7,11 @@
 #include <random>
 #include <utility>
 #include <algorithm>
+#include <climits>
 
 
 class Welcome;
+class ConstantManager;
 class InputManager;
 class RandomNumberGenerator;
 class ScreenManager;
@@ -24,8 +26,54 @@ class Initializer;
 class Main;
 
 // Done
+class ConstantManager {
+    public: 
+    static constexpr const char BANK_NAME[] = "RAM BHAROSE BANK";
+
+    static constexpr int ACCOUNT_NUMBER_LENGTH = 6;
+    static constexpr int PIN_LENGTH = 4;  
+
+    static constexpr double MIN_INIT_AMOUNT_DEPOSIT = 500;
+    static constexpr double MAX_BALANCE = 1e8;
+
+    static constexpr int MIN_PIN = 1000;
+    static constexpr int MAX_PIN = 9999;
+
+    static constexpr int LOGIN_ATTEMPTS = 3;
+
+    enum STATUS {
+        SUCCESS = 0,
+        FAILURE = 1
+    };
+};
+
 class InputManager {
 public:
+    static int 
+    get_number_input(int attempts, int minm, int maxm, std::string prompt, std::string err_warning) {
+        int input = -1;
+        do {
+            /// TODO:
+            std::cout << prompt;
+            std::cin >> input;
+
+
+            if(std::cin.fail() || input < minm || input > maxm) {
+                std::cin.clear(); // clear error flag
+
+                // discard invalid input
+                std::cin.ignore
+                    (std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << err_warning << std::endl;
+                input = INT_MIN;
+            } else {
+                break;
+            }
+        } while(--attempts);
+
+        return input;
+    }
+
     static int get_number_input(int digits, std::string prompt, std::string err_warning) {
         int input = 0;
         do {
@@ -152,7 +200,7 @@ public:
 // done but contains intialize() and then can be expanded
 class AccountNumberManager {
     using AccountNumberSet = std::set<int>;
-    static constexpr int ACC_NUM_DIGITS = 6;
+    static constexpr int ACC_NUM_DIGITS = ConstantManager::ACCOUNT_NUMBER_LENGTH;
 
     public:
     static AccountNumberSet acc_num_set;
@@ -183,17 +231,17 @@ class AccountNumberManager {
 // 
 class Account {
     public:
-    static constexpr int ACCOUNT_NUMBER_LENGTH = 6;
-    static constexpr int PIN_LENGTH = 4;  
-    static constexpr double MAX_BALANCE = 1e8;
+    static constexpr int ACCOUNT_NUMBER_LENGTH = ConstantManager::ACCOUNT_NUMBER_LENGTH;
+    static constexpr int PIN_LENGTH = ConstantManager::PIN_LENGTH;  
+    static constexpr double MAX_BALANCE = ConstantManager::MAX_BALANCE;
 
     int acc_num;
     double balance;
     bool is_valid;
     
     enum ACCOUNT_STATUS {
-        SUCCESS = 0, 
-        FAILURE = 1
+        SUCCESS = ConstantManager::SUCCESS, 
+        FAILURE = ConstantManager::FAILURE
     };
 
     // Constructor
@@ -318,7 +366,7 @@ class AccountManager {
 
 class Welcome {
 public:
-    static constexpr const char BANK_NAME[] = "RAM BHAROSE BANK";
+    static constexpr const char *BANK_NAME = ConstantManager::BANK_NAME;
 
     static void welcome() {
         ScreenManager::clear_screen();
@@ -353,8 +401,8 @@ class LoginMenuManger {
 // TODO: complete this function
 class AccountCreater {
     public:
-    static constexpr double MIN_BALANCE = 1000;
-    static constexpr double MAX_BALANCE = Account::MAX_BALANCE;
+    static constexpr double MIN_BALANCE = ConstantManager::MIN_INIT_AMOUNT_DEPOSIT;
+    static constexpr double MAX_BALANCE = ConstantManager::MAX_BALANCE;
 
     static void create_account() {
         // here you can use the InputManager class to get the input from the user
@@ -373,18 +421,33 @@ class AccountCreater {
         AccountManager::add_account(new_account);
 
         puts("Account created successfully!!\n");
-
-
     }
 };
 
-// TODO: 
+/// TODO: 
 class LoginManager {
+    static constexpr int ATTEMPTS = ConstantManager::LOGIN_ATTEMPTS;
+    static constexpr int DIGITS_IN_PIN = ConstantManager::PIN_LENGTH;
+    static constexpr int MIN_PIN = ConstantManager::MIN_PIN;
+    static constexpr int MAX_PIN = ConstantManager::MAX_PIN;
+
+    enum LOGIN_STATUS {
+        SUCCESS = ConstantManager::STATUS::SUCCESS, 
+        FAILURE = ConstantManager::STATUS::FAILURE
+    };
+    
     public:
     static bool prompt_login() {
         puts("Login page: \n");
 
         std::cout << "Enter your existing account number: ";
+        int acc_num = InputManager::get_number_input
+            (Account::ACCOUNT_NUMBER_LENGTH, "Enter your account number: ", "Invalid account number!!\n");
+
+        std::cout << "Enter your pin: ";
+        /// TODO: write the pin function and complete the function
+
+        return LOGIN_STATUS::SUCCESS;
     }
 };
 
