@@ -240,8 +240,8 @@ class Account {
     bool is_valid;
     
     enum ACCOUNT_STATUS {
-        SUCCESS = ConstantManager::SUCCESS, 
-        FAILURE = ConstantManager::FAILURE
+        SUCCESS = ConstantManager::STATUS::SUCCESS, 
+        FAILURE = ConstantManager::STATUS::FAILURE
     };
 
     // Constructor
@@ -272,6 +272,10 @@ class Account {
 
     void set_pin(int pin) {
         this->pin = pin;
+    }
+
+    int get_pin() const {
+        return this->pin;
     }
 
     void make_deposit(double amount) {
@@ -346,7 +350,7 @@ class AccountManager {
     }
 
     static const Account &get_account_read_only(int acc_num) {
-        for (const auto &it : accounts) {
+        for (const auto& it : accounts) {
             if (it.acc_num == acc_num) {
                 return it;
             }
@@ -355,6 +359,15 @@ class AccountManager {
         // Return a reference to a static null account if not found
         static Account acc_null;
         return acc_null;
+    }
+
+    static bool verify_existing_account(int acc_num, int pin) {
+        for(const auto &it: accounts) {
+            if(it.acc_num == acc_num && it.get_pin() == pin) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static void initialize() {
@@ -446,6 +459,18 @@ class LoginManager {
 
         std::cout << "Enter your pin: ";
         /// TODO: write the pin function and complete the function
+        int pin = 
+        InputManager::get_number_input (
+            ATTEMPTS, 
+            MIN_PIN, 
+            MAX_PIN, 
+            "Enter your pin: ",
+            "Invalid PIN"
+        );
+
+        // calling another class AccountManager's functions
+        /// TODO: Create a verify account method in AccountManager and then come back
+        
 
         return LOGIN_STATUS::SUCCESS;
     }
