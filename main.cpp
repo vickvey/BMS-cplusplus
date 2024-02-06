@@ -50,13 +50,9 @@ class ConstantManager {
 class InputManager {
 public:
     static int get_number_input(int attempts, int minm, int maxm, std::string prompt, std::string err_warning);
-
     static int get_number_input(int digits, std::string prompt, std::string err_warning);
-
     static int get_number_input(int minm, int maxm, std::string prompt, std::string err_warning);
-
     static double get_real_input(double low, double high, std::string prompt, std::string err_warning);
-
     static bool get_bool_input(std::string prompt, std::string warning);
 
 private:
@@ -72,39 +68,14 @@ private:
 
 class ScreenManager {
 public:
-    static void clear_screen() {
-        #ifdef _WIN32
-            std::system("cls"); // For Windows
-        #else
-            std::system("clear"); // For Unix/Linux/Mac
-        #endif
-    }
-
-    static void hold_screen() {
-        std::cout << "Press Enter to continue...";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    }
+    static void clear_screen();
+    static void hold_screen();
 };
 
 // Done 
 class RandomNumberGenerator {
 public:
-    static int get_random_number(int digits) {
-        if (digits <= 0) {
-            std::cerr << "Error: Number of digits should be greater than 0." 
-                      << std::endl;
-
-            // You can handle errors according to your application's logic
-            return -1; 
-        }
-
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<int> 
-            distribution(pow(10, digits - 1), pow(10, digits) - 1);
-
-        return distribution(gen);
-    }
+    static int get_random_number(int digits);
 };
 
 // done but contains intialize() and then can be expanded
@@ -115,27 +86,9 @@ class AccountNumberManager {
     public:
     static AccountNumberSet acc_num_set;
 
-    static bool check_existing_acc_num(int acc_num) {
-        if(acc_num_set.find(acc_num) != acc_num_set.end()) 
-            return true;
-        return false;
-    }
-
-    static int get_fresh_acc_num() {
-        int acc_num = RandomNumberGenerator::get_random_number(ACC_NUM_DIGITS);
-        while(check_existing_acc_num(acc_num) == true) {
-            acc_num = RandomNumberGenerator::get_random_number(ACC_NUM_DIGITS);
-        }
-
-        acc_num_set.insert(acc_num);
-        return acc_num;
-    }
-
-    static void initialize() {
-        // Perform any necessary initialization for AccountNumberManager here
-        // For example, you might want to clear the set or load data from a file.
-        acc_num_set.clear();
-    }
+    static bool check_existing_acc_num(int acc_num);
+    static int get_fresh_acc_num();
+    static void initialize();
 };
 
 // 
@@ -155,74 +108,28 @@ class Account {
     };
 
     // Constructor
-    explicit Account(int acc_num, double balance, int pin):
-        acc_num(acc_num), balance(balance), is_valid(true), pin(pin) {}
+    explicit Account(int acc_num, double balance, int pin);
 
     // Constructor for an invalid account (null-like state)
-    Account(): acc_num(-1), is_valid(false) {}
+    Account();
 
     // Member function to check if the account is valid
-    bool is_valid_account() const {
-        auto calculate_digits = [](int number) -> int {
-            return static_cast<int>(std::floor(std::log10(std::abs(number)))) + 1;
-        };
-
-        if (calculate_digits(acc_num) != ACCOUNT_NUMBER_LENGTH 
-            || calculate_digits(pin) != PIN_LENGTH) 
-        {
-            return false;
-        }
-
-        if (!(balance >= 0 && balance <= MAX_BALANCE)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    void set_pin(int pin) {
-        this->pin = pin;
-    }
-
-    int get_pin() const {
-        return this->pin;
-    }
-
-    void make_deposit(double amount) {
-        this->balance += amount;
-    }
+    bool is_valid_account() const;
+    void set_pin(int pin);
+    int get_pin() const;
+    void make_deposit(double amount);
 
     // returns ACCOUNT_STATUS::FAILURE if withdrawal is not possible, 
     // ACCOUNT_STATUS::SUCCESS otherwise
-    int make_withdraw(double amount) {
-        if(this->balance > amount) {
-            this->balance -= amount;
-            return ACCOUNT_STATUS::SUCCESS;
-        }
-        return ACCOUNT_STATUS::FAILURE;
-    }
+    int make_withdraw(double amount);
 
     /**
      * returns ACCOUNT_STATUS::FAILURE if you don't have that much balance
      * returns ACCOUNT_STATUS::SUCCESS if the transaction is successful
      */
-    int make_transfer(Account& beneficiary, double amount) {
-        if (make_withdraw(amount) == 0) {
-            beneficiary.make_deposit(amount);
-            return ACCOUNT_STATUS::SUCCESS;   
-        }
-        return ACCOUNT_STATUS::FAILURE;
-    }
-
-    void check_balance() {
-        std::cout << "Curr balance: Rs " << this->balance << std::endl;
-    }
-
-    void display_account() const {
-        std::cout << "Here are your recorded account details: \n";
-        std::cout << "Account number: " << this->acc_num << std::endl;
-        std::cout << "Balance: Rs " << this->balance << std::endl;
-    }
+    int make_transfer(Account& beneficiary, double amount);
+    void check_balance() const;
+    void display_account() const;
 
     private:
     int pin;
@@ -234,68 +141,19 @@ class AccountManager {
     public:
     static AccountList accounts;
 
-    static void add_account(const Account& account) {
-        accounts.push_back(account);
-    }
-
-    static Account *get_account(int acc_num) {
-        for(auto& it: accounts) {
-            if(it.acc_num == acc_num) {
-                return &it;
-            }
-        }
-        return NULL;
-    }
-
-    static void delete_account(int acc_num) {
-        for (auto it = accounts.begin(); it != accounts.end(); /* no increment here*/) {
-            if (it->acc_num == acc_num) {
-                // Erase the element and get the iterator to the next element
-                it = accounts.erase(it); 
-            } else {
-                // Increment the iterator if no erase occurs
-                ++it; 
-            }
-        }
-    }
-
-    static const Account &get_account_read_only(int acc_num) {
-        for (const auto& it : accounts) {
-            if (it.acc_num == acc_num) {
-                return it;
-            }
-        }
-
-        // Return a reference to a static null account if not found
-        static Account acc_null;
-        return acc_null;
-    }
-
-    static bool verify_existing_account(int acc_num, int pin) {
-        for(const auto &it: accounts) {
-            if(it.acc_num == acc_num && it.get_pin() == pin) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    static void initialize() {
-        // Perform any necessary initialization for AccountNumberManager here
-        // For example, you might want to clear the set or load data from a file.
-        accounts.clear();
-    }
+    static void add_account(const Account& account);
+    static Account *get_account(int acc_num);
+    static void delete_account(int acc_num);
+    static const Account &get_account_read_only(int acc_num);
+    static bool verify_existing_account(int acc_num, int pin);
+    static void initialize();
 };
 
 class Welcome {
 public:
     static constexpr const char *BANK_NAME = ConstantManager::BANK_NAME;
 
-    static void welcome() {
-        ScreenManager::clear_screen();
-        std::cout << "Welcome to " << BANK_NAME << "!!" << std::endl;
-        ScreenManager::hold_screen();
-    }
+    static void welcome();
 };
 
 class LoginMenuManger {
@@ -306,19 +164,8 @@ class LoginMenuManger {
         "Press 3: To delete an existing account.\n"
         "Press 4: To exit the portal!!\n";
 
-    static void show_menu_options() {
-        std::cout << MENU_OPTIONS << std::endl;
-    }
-
-    static int get_prompt_from_login_menu() {
-        int prompt = 0;
-
-        ScreenManager::clear_screen();
-        show_menu_options();
-        std::cin >> prompt;
-
-        return prompt;
-    }
+    static void show_menu_options();
+    static int get_prompt_from_login_menu();
 };
 
 // TODO: complete this function
@@ -327,24 +174,7 @@ class AccountCreater {
     static constexpr double MIN_BALANCE = ConstantManager::MIN_INIT_AMOUNT_DEPOSIT;
     static constexpr double MAX_BALANCE = ConstantManager::MAX_BALANCE;
 
-    static void create_account() {
-        // here you can use the InputManager class to get the input from the user
-        printf("Account creation page: \n");
-        int acc_num = AccountNumberManager::get_fresh_acc_num();
-        
-        puts("Please enter your pin carefully!!.\n");
-        int pin = InputManager::get_number_input(4, "Enter your pin: ", "Invalid pin!!\n");
-
-        puts("Please enter the intial deposit amount!!\n");
-        double balance = InputManager::get_real_input
-            (MIN_BALANCE, MAX_BALANCE, "Enter your initial amount to deposit: ",
-                "Invalid amount deposit!!\n");
-
-        Account new_account(acc_num, balance, pin);
-        AccountManager::add_account(new_account);
-
-        puts("Account created successfully!!\n");
-    }
+    static void create_account();
 };
 
 /// TODO: 
@@ -360,33 +190,7 @@ class LoginManager {
     };
     
     public:
-    static bool prompt_login() {
-        puts("Login page: \n");
-
-        std::cout << "Enter your existing account number: ";
-        int acc_num = InputManager::get_number_input
-            (Account::ACCOUNT_NUMBER_LENGTH, "Enter your account number: ", "Invalid account number!!\n");
-
-        std::cout << "Enter your pin: ";
-        /// TODO: write the pin function and complete the function
-        int pin = 
-        InputManager::get_number_input (
-            ATTEMPTS, 
-            MIN_PIN, 
-            MAX_PIN, 
-            "Enter your pin: ",
-            "Invalid PIN"
-        );
-
-        // calling another class AccountManager's functions
-        /// TODO: Create a verify account method in AccountManager and then come back
-        if(AccountManager::verify_existing_account(acc_num, pin) == false) {
-            puts("Invalid account number or pin!!\n");
-            return LOGIN_STATUS::FAILURE;
-        }
-        
-        return LOGIN_STATUS::SUCCESS;
-    }
+    static bool prompt_login();
 };
 
 
@@ -394,44 +198,12 @@ class LoginManager {
 class AccountRemover {
     public: 
     static constexpr int ATTEMPTS = ConstantManager::LOGIN_ATTEMPTS;
-
-    static void remove_account() {
-        // here you can use the InputManager class to get the input from the user
-        printf("Account deletion page: \n");
-        int acc_num = InputManager::get_number_input
-            (Account::ACCOUNT_NUMBER_LENGTH, "Enter your account number: ", "Invalid account number!!\n");
-
-        // giving three attempts to use to enter the correct pin
-        int pin = InputManager::get_number_input
-            (ATTEMPTS, "Enter your pin: ", "Invalid pin!!\n");
-
-        // calling another class AccountManager's functions
-        if(AccountManager::verify_existing_account(acc_num, pin) == false) {
-            puts("Invalid account number or pin!!\n");
-            return;
-        }
-
-        AccountManager::delete_account(acc_num);
-        puts("Account deleted successfully!!\n");
-    }
+    static void remove_account();
 };
 
 class Initializer {
 public:
-    static void initialize() {
-        // Initialize various resources and configurations here
-
-        // Example: RandomNumberGenerator::initialize();
-        
-        // Initialize AccountNumberManager
-        AccountNumberManager::initialize();
-        // ...
-
-        // Initialize AccountManager
-        AccountManager::initialize();
-
-        // Initialize 
-    }
+    static void initialize();
 };
 
 class Main {
@@ -525,20 +297,17 @@ get_number_input(int minm, int maxm, std::string prompt, std::string err_warning
 double InputManager::
 get_real_input(double low, double high, std::string prompt, std::string err_warning) {
     double input;
-    do
-    {
+    do {
         std::cout << prompt;
         std::cin >> input;
-        if (std::cin.fail() || input < low || input > high)
-        {
+        if (std::cin.fail() || input < low || input > high) {
             std::cin.clear(); // clear error flag
 
             // discard invalid input
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             std::cout << err_warning << std::endl;
         }
-        else
-        {
+        else {
             break;
         }
     } while (true);
@@ -561,4 +330,241 @@ get_bool_input(std::string prompt, std::string warning) {
             std::cout << warning << std::endl;
         }
     } while (true);
+}
+
+void ScreenManager::clear_screen() {
+#ifdef _WIN32
+    std::system("cls"); // For Windows
+#else
+    std::system("clear"); // For Unix/Linux/Mac
+#endif
+}
+
+void ScreenManager::hold_screen() {
+    std::cout << "Press Enter to continue...";
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
+
+int RandomNumberGenerator::get_random_number(int digits)
+{
+    if (digits <= 0)
+    {
+        std::cerr << "Error: Number of digits should be greater than 0."
+                  << std::endl;
+
+        // You can handle errors according to your application's logic
+        return -1;
+    }
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int>
+        distribution(pow(10, digits - 1), pow(10, digits) - 1);
+
+    return distribution(gen);
+}
+
+bool AccountNumberManager::
+check_existing_acc_num(int acc_num) {
+    if (acc_num_set.find(acc_num) != acc_num_set.end())
+        return true;
+    return false;
+}
+
+int AccountNumberManager::
+get_fresh_acc_num() {
+    int acc_num = RandomNumberGenerator::get_random_number(ACC_NUM_DIGITS);
+    while (check_existing_acc_num(acc_num) == true) {
+        acc_num = RandomNumberGenerator::get_random_number(ACC_NUM_DIGITS);
+    }
+
+    acc_num_set.insert(acc_num);
+    return acc_num;
+}
+
+void AccountNumberManager::
+initialize() {
+    // Perform any necessary initialization for AccountNumberManager here
+    // For example, you might want to clear the set or load data from a file.
+    acc_num_set.clear();
+}
+
+// Constructor
+Account::
+Account(int acc_num, double balance, int pin)
+    : acc_num(acc_num), balance(balance), is_valid(true), pin(pin) {}
+
+// Constructor for an invalid account (null-like state)
+Account::
+Account() 
+    : acc_num(-1), is_valid(false) {}
+
+// Member function to check if the account is valid
+bool Account::
+is_valid_account() const
+{
+    auto calculate_digits = [](int number) -> int {
+        return static_cast<int>(std::floor(std::log10(std::abs(number)))) + 1;
+    };
+
+    if (calculate_digits(acc_num) != ACCOUNT_NUMBER_LENGTH || calculate_digits(pin) != PIN_LENGTH) {
+        return false;
+    }
+
+    if (!(balance >= 0 && balance <= MAX_BALANCE)) {
+        return false;
+    }
+
+    return true;
+}
+
+void Account::
+set_pin(int pin) {
+    this->pin = pin;
+}
+
+int Account::
+get_pin() const {
+    return this->pin;
+}
+
+void Account::
+make_deposit(double amount) {
+    this->balance += amount;
+}
+
+int Account::
+make_withdraw(double amount) {
+    if (this->balance > amount) {
+        this->balance -= amount;
+        return ACCOUNT_STATUS::SUCCESS;
+    }
+    return ACCOUNT_STATUS::FAILURE;
+}
+
+int Account::
+make_transfer(Account &beneficiary, double amount) {
+    if (make_withdraw(amount) == 0) {
+        beneficiary.make_deposit(amount);
+        return ACCOUNT_STATUS::SUCCESS;
+    }
+    return ACCOUNT_STATUS::FAILURE;
+}
+
+void Account::
+check_balance() const {
+    std::cout << "Curr balance: Rs " << this->balance << std::endl;
+}
+
+void Account::
+display_account() const {
+    std::cout << "Here are your recorded account details: \n";
+    std::cout << "Account number: " << this->acc_num << std::endl;
+    std::cout << "Balance: Rs " << this->balance << std::endl;
+}
+
+void Welcome::
+welcome() {
+    ScreenManager::clear_screen();
+    std::cout << "Welcome to " << BANK_NAME << "!!" << std::endl;
+    ScreenManager::hold_screen();
+}
+
+void LoginMenuManger::
+show_menu_options() {
+    std::cout << MENU_OPTIONS << std::endl;
+}
+
+int LoginMenuManger::
+get_prompt_from_login_menu() {
+    int prompt = 0;
+
+    ScreenManager::clear_screen();
+    show_menu_options();
+    std::cin >> prompt;
+
+    return prompt;
+}
+
+void AccountCreater::
+create_account() {
+    // here you can use the InputManager class to get the input from the user
+    printf("Account creation page: \n");
+    int acc_num = AccountNumberManager::get_fresh_acc_num();
+
+    puts("Please enter your pin carefully!!.\n");
+    int pin = InputManager::
+        get_number_input(4, "Enter your pin: ", "Invalid pin!!\n");
+
+    puts("Please enter the intial deposit amount!!\n");
+    double balance = InputManager::
+        get_real_input(MIN_BALANCE, MAX_BALANCE, "Enter your initial amount to deposit: ",
+                                                  "Invalid amount deposit!!\n");
+
+    Account new_account(acc_num, balance, pin);
+    AccountManager::add_account(new_account);
+
+    puts("Account created successfully!!\n");
+}
+
+bool LoginManager::
+prompt_login() {
+    puts("Login page: \n");
+
+    std::cout << "Enter your existing account number: ";
+    int acc_num = InputManager::get_number_input(Account::ACCOUNT_NUMBER_LENGTH, "Enter your account number: ", "Invalid account number!!\n");
+
+    std::cout << "Enter your pin: ";
+    /// TODO: write the pin function and complete the function
+    int pin =
+        InputManager::get_number_input(
+            ATTEMPTS,
+            MIN_PIN,
+            MAX_PIN,
+            "Enter your pin: ",
+            "Invalid PIN");
+
+    // calling another class AccountManager's functions
+    /// TODO: Create a verify account method in AccountManager and then come back
+    if (AccountManager::verify_existing_account(acc_num, pin) == false) {
+        puts("Invalid account number or pin!!\n");
+        return LOGIN_STATUS::FAILURE;
+    }
+
+    return LOGIN_STATUS::SUCCESS;
+}
+
+void AccountRemover::
+remove_account() {
+    // here you can use the InputManager class to get the input from the user
+    printf("Account deletion page: \n");
+    int acc_num = InputManager::get_number_input(Account::ACCOUNT_NUMBER_LENGTH, "Enter your account number: ", "Invalid account number!!\n");
+
+    // giving three attempts to use to enter the correct pin
+    int pin = InputManager::get_number_input(ATTEMPTS, "Enter your pin: ", "Invalid pin!!\n");
+
+    // calling another class AccountManager's functions
+    if (AccountManager::verify_existing_account(acc_num, pin) == false) {
+        puts("Invalid account number or pin!!\n");
+        return;
+    }
+
+    AccountManager::delete_account(acc_num);
+    puts("Account deleted successfully!!\n");
+}
+
+void Initializer::
+initialize() {
+    // Initialize various resources and configurations here
+
+    // Example: RandomNumberGenerator::initialize();
+
+    // Initialize AccountNumberManager
+    AccountNumberManager::initialize();
+    // ...
+
+    // Initialize AccountManager
+    AccountManager::initialize();
+
+    // Initialize
 }
