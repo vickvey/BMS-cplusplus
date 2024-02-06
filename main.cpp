@@ -49,105 +49,15 @@ class ConstantManager {
 
 class InputManager {
 public:
-    static int 
-    get_number_input(int attempts, int minm, int maxm, std::string prompt, std::string err_warning) {
-        int input = -1;
-        do {
-            /// TODO:
-            std::cout << prompt;
-            std::cin >> input;
+    static int get_number_input(int attempts, int minm, int maxm, std::string prompt, std::string err_warning);
 
+    static int get_number_input(int digits, std::string prompt, std::string err_warning);
 
-            if(std::cin.fail() || input < minm || input > maxm) {
-                std::cin.clear(); // clear error flag
+    static int get_number_input(int minm, int maxm, std::string prompt, std::string err_warning);
 
-                // discard invalid input
-                std::cin.ignore
-                    (std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cout << err_warning << std::endl;
-                input = INT_MIN;
-            } else {
-                break;
-            }
-        } while(--attempts);
+    static double get_real_input(double low, double high, std::string prompt, std::string err_warning);
 
-        return input;
-    }
-
-    static int get_number_input(int digits, std::string prompt, std::string err_warning) {
-        int input = 0;
-        do {
-            std::cout << prompt;
-            std::cin >> input;
-            if (std::cin.fail() || count_digits(input) != digits) {
-                std::cin.clear();  // clear error flag
-                
-                // discard invalid input
-                std::cin.ignore
-                    (std::numeric_limits<std::streamsize>::max(), '\n');  
-                std::cout << err_warning << std::endl;
-            } else {
-                break;
-            }
-        } while (true);
-        return input;
-    }
-
-    static int get_number_input
-        (int minm, int maxm, std::string prompt, std::string err_warning) 
-    {
-        int input;
-        do {
-            std::cout << prompt;
-            std::cin >> input;
-            if (std::cin.fail() || input <= minm || input >= maxm) {
-                std::cin.clear();  // clear error flag
-                
-                // discard invalid input
-                std::cin.ignore
-                    (std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cout << err_warning << std::endl;
-            } else {
-                break;
-            }
-        } while (true);
-        return input;
-    }
-
-    static double get_real_input
-        (double low, double high, std::string prompt, std::string err_warning) 
-    {
-        double input;
-        do {
-            std::cout << prompt;
-            std::cin >> input;
-            if (std::cin.fail() || input < low || input > high) {
-                std::cin.clear();  // clear error flag
-
-                // discard invalid input
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  
-                std::cout << err_warning << std::endl;
-            } else {
-                break;
-            }
-        } while (true);
-        return input;
-    }
-
-    static bool get_bool_input(std::string prompt, std::string warning) {
-        std::string input;
-        do {
-            std::cout << prompt;
-            std::cin >> input;
-            if (input == "true" || input == "1" || input == "yes" || input == "y") {
-                return true;
-            } else if (input == "false" || input == "0" || input == "no" || input == "n") {
-                return false;
-            } else {
-                std::cout << warning << std::endl;
-            }
-        } while (true);
-    }
+    static bool get_bool_input(std::string prompt, std::string warning);
 
 private:
     static int count_digits(int number) {
@@ -470,8 +380,11 @@ class LoginManager {
 
         // calling another class AccountManager's functions
         /// TODO: Create a verify account method in AccountManager and then come back
+        if(AccountManager::verify_existing_account(acc_num, pin) == false) {
+            puts("Invalid account number or pin!!\n");
+            return LOGIN_STATUS::FAILURE;
+        }
         
-
         return LOGIN_STATUS::SUCCESS;
     }
 };
@@ -480,8 +393,26 @@ class LoginManager {
 // TODO: 
 class AccountRemover {
     public: 
+    static constexpr int ATTEMPTS = ConstantManager::LOGIN_ATTEMPTS;
+
     static void remove_account() {
-        //
+        // here you can use the InputManager class to get the input from the user
+        printf("Account deletion page: \n");
+        int acc_num = InputManager::get_number_input
+            (Account::ACCOUNT_NUMBER_LENGTH, "Enter your account number: ", "Invalid account number!!\n");
+
+        // giving three attempts to use to enter the correct pin
+        int pin = InputManager::get_number_input
+            (ATTEMPTS, "Enter your pin: ", "Invalid pin!!\n");
+
+        // calling another class AccountManager's functions
+        if(AccountManager::verify_existing_account(acc_num, pin) == false) {
+            puts("Invalid account number or pin!!\n");
+            return;
+        }
+
+        AccountManager::delete_account(acc_num);
+        puts("Account deleted successfully!!\n");
     }
 };
 
@@ -514,8 +445,7 @@ class Main {
         Welcome::welcome();
 
         int t = LoginMenuManger::get_prompt_from_login_menu();
-
-        std::cout << t << std::endl;
+        std::cout << "you chose " << t << std::endl;
     }
 };
 
@@ -523,4 +453,112 @@ class Main {
 int main() {
     Main::main();
     return 0;
+}
+
+int InputManager::
+get_number_input(int attempts, int minm, int maxm, std::string prompt, std::string err_warning) {
+    int input = -1;
+    do {
+        /// TODO:
+        std::cout << prompt;
+        std::cin >> input;
+
+        if (std::cin.fail() || input < minm || input > maxm) {
+            std::cin.clear(); // clear error flag
+
+            // discard invalid input
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << err_warning << std::endl;
+            input = INT_MIN;
+        }
+        else {
+            break;
+        }
+    } while (--attempts);
+
+    return input;
+}
+
+int InputManager::
+get_number_input(int digits, std::string prompt, std::string err_warning) {
+    int input = 0;
+    do {
+        std::cout << prompt;
+        std::cin >> input;
+        if (std::cin.fail() || count_digits(input) != digits) {
+            std::cin.clear(); // clear error flag
+
+            // discard invalid input
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << err_warning << std::endl;
+        } else {
+            break;
+        }
+    } while (true);
+    return input;
+}
+
+int InputManager::
+get_number_input(int minm, int maxm, std::string prompt, std::string err_warning)
+{
+    int input;
+    do
+    {
+        std::cout << prompt;
+        std::cin >> input;
+        if (std::cin.fail() || input <= minm || input >= maxm)
+        {
+            std::cin.clear(); // clear error flag
+
+            // discard invalid input
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << err_warning << std::endl;
+        }
+        else
+        {
+            break;
+        }
+    } while (true);
+    return input;
+}
+
+double InputManager::
+get_real_input(double low, double high, std::string prompt, std::string err_warning) {
+    double input;
+    do
+    {
+        std::cout << prompt;
+        std::cin >> input;
+        if (std::cin.fail() || input < low || input > high)
+        {
+            std::cin.clear(); // clear error flag
+
+            // discard invalid input
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << err_warning << std::endl;
+        }
+        else
+        {
+            break;
+        }
+    } while (true);
+    return input;
+}
+
+bool InputManager::
+get_bool_input(std::string prompt, std::string warning) {
+    std::string input;
+    do {
+        std::cout << prompt;
+        std::cin >> input;
+        if (input == "true" || input == "1" || input == "yes" || input == "y") {
+            return true;
+        }
+        else if (input == "false" || input == "0" || input == "no" || input == "n") {
+            return false;
+        }
+        else {
+            std::cout << warning << std::endl;
+        }
+    } while (true);
 }
